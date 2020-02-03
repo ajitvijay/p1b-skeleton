@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <unistd.h>
-//#include "rwlock.h"
 #include "hashchain.h"
 #include "synch.h"
 
@@ -37,26 +36,31 @@
 #define END_READ() do{}while(0)
 #define START_WRITE() do{}while(0)
 #define END_WRITE() do{}while(0)
+
 #elif defined P1_SEMAPHORE //using nachos semaphore. Your solution for Task 1
-#define START_READ() do{}while(0) //TODO  
-#define END_READ() do{}while(0) //TODO
-#define START_WRITE() do{}while(0) //TODO
-#define END_WRITE() do{}while(0) //TODO
+#define START_READ()sem[hash].startRead() //TODO  
+#define END_READ()sem[hash].doneRead() //TODO
+#define START_WRITE()sem[hash].startWrite()//TODO
+#define END_WRITE()sem[hash].doneWrite()//TODO
+
 #elif defined P1_LOCK //using our implemented nachos lock. Your solution for Task 2
-#define START_READ() do{}while(0) //TODO
-#define END_READ() do{}while(0) //TODO
-#define START_WRITE() do{}while(0) //TODO
-#define END_WRITE() do{}while(0) //TODO
+#define START_READ()lck[hash].startRead() //TODO
+#define END_READ() lck[hash].doneRead() //TODO
+#define START_WRITE()lck[hash].startWrite() //TODO
+#define END_WRITE()lck[hash].doneWrite()//TODO
+
 #elif defined P1_RWLOCK //using our rwlock. Your solution for Task 3
-#define START_READ() do{}while(0) //TODO
-#define END_READ() do{}while(0) //TODO
-#define START_WRITE() do{}while(0) //TODO
-#define END_WRITE() do{}while(0) //TODO
+#define START_READ() rwlock[hash].startRead() //TODO
+#define END_READ() rwlock[hash].doneRead()//TODO
+#define START_WRITE() rwlock[hash].startWrite()  //TODO
+#define END_WRITE() rwlock[hash].doneWrite()//TODO
+
 #else //else behave like NOLOCK (no option passed)
 #define START_READ() do{}while(0)
 #define END_READ() do{}while(0)
 #define START_WRITE() do{}while(0)
 #define END_WRITE() do{}while(0)
+
 #endif
 
 LinkedHashEntry:: LinkedHashEntry(int key1, int value1) {
@@ -96,12 +100,16 @@ HashMap::HashMap() {
   table = new LinkedHashEntry*[TABLE_SIZE];
   for (int i = 0; i < TABLE_SIZE; i++)
     table[i] = NULL;
+
 #ifdef P1_SEMAPHORE
-  //insert setup code here
+  for(int i = 0; i < TABLE_SIZE; i++)
+    sem[i] = new Semaphore("semaphore", 1);
 #elif defined P1_LOCK
-  //insert setup code here
+  for(int i = 0; i < TABLE_SIZE; i++)
+    lck[i] = new Lock("Lock");
 #elif defined P1_RWLOCK
-  //insert setup code here
+  for(int i = 0; i < TABLE_SIZE; i++)
+    rwlock[i] = new RWlock();
 #endif
 }
 
