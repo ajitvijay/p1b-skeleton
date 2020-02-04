@@ -104,11 +104,47 @@ Semaphore::V()
 // Your solution for Task 2
 // TODO
 
-Lock::Lock(char* debugName) { }
-Lock::~Lock() { }
-void Lock::Acquire() { }
-void Lock::Release() { }
-bool Lock::isHeldByCurrentThread() { }
+Lock::Lock(char* debugName) {
+    this->name = debugName;
+    this->value = 0; 
+    this->queue = new List();
+    this->owner = NULL;
+}
+
+Lock::~Lock() { 
+    delete queue;
+}
+
+void Lock::Acquire() { 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); // disable interrupts
+    while(value){//if value == 1, some other thread has the lock so wait
+        queue->Append((void*)currentThread);
+        currentThread->Sleep();
+    }
+
+    value = 1;//set value back to 1 and give lock to current thread
+    owner = currentThread;
+    (void) interrupt->SetLevel(oldLevel); //re-enable interrupts 
+
+}
+
+void Lock::Release() { 
+    Thread* thread;
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    value = 0; 
+    owner = NULL;
+
+    thread = (Thread *)queue->Remove(); //thread finished so remove the thread from the queue
+    if(thread != NULL)
+        scheduler->ReadyToRun(thread);
+
+    (void) interrupt->SetLevel(oldLevel); 
+}
+
+bool Lock::isHeldByCurrentThread() { 
+    if(owner == currentThread) return true;
+    else return false; 
+}
 
 // Your solution for Task 3
 // TODO
