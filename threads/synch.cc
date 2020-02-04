@@ -117,13 +117,13 @@ Lock::~Lock() {
 
 void Lock::Acquire() { 
     IntStatus oldLevel = interrupt->SetLevel(IntOff); // disable interrupts
-    if(value){//if value == 1, some other thread has the lock so wait
+    while(value){//if value == 1, some other thread has the lock so wait
         queue->Append((void*)currentThread);
         currentThread->Sleep();
-    }else{
-        value = 1;//set value back to 1 and give lock to current thread
-        owner = currentThread;
     }
+    value = 1;//set value back to 1 and give lock to current thread
+    owner = currentThread;
+    
     (void) interrupt->SetLevel(oldLevel); //re-enable interrupts 
 
 }
