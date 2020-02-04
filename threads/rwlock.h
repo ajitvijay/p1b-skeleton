@@ -5,7 +5,10 @@
 
 class RWLock{
 private:
-      //Add  fields for  RWLock. Your solution to Task 3
+      int Active_R, Waiting_R, Active_W, Waiting_W;
+      Condition* okToRead;
+      Condition* okToWrite;
+      Lock* lock;
       //TODO
 public:
     	RWLock();

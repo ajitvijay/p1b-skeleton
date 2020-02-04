@@ -117,13 +117,13 @@ Lock::~Lock() {
 
 void Lock::Acquire() { 
     IntStatus oldLevel = interrupt->SetLevel(IntOff); // disable interrupts
-    while(value){//if value == 1, some other thread has the lock so wait
+    if(value){//if value == 1, some other thread has the lock so wait
         queue->Append((void*)currentThread);
         currentThread->Sleep();
+    }else{
+        value = 1;//set value back to 1 and give lock to current thread
+        owner = currentThread;
     }
-
-    value = 1;//set value back to 1 and give lock to current thread
-    owner = currentThread;
     (void) interrupt->SetLevel(oldLevel); //re-enable interrupts 
 
 }
@@ -149,8 +149,39 @@ bool Lock::isHeldByCurrentThread() {
 // Your solution for Task 3
 // TODO
 
-Condition::Condition(char* debugName) { }
-Condition::~Condition() { }
-void Condition::Wait(Lock* conditionLock) { }
-void Condition::Signal(Lock* conditionLock) { }
-void Condition::Broadcast(Lock* conditionLock) { }
+Condition::Condition(char* debugName) {
+    this->name = debugName;
+    this->queue = new List();
+}
+Condition::~Condition() { 
+    delete queue;
+}
+void Condition::Wait(Lock* conditionLock) { 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    conditionLock->Release();
+    queue->Append((void*)currentThread);
+    currentThread->Sleep();
+    conditionLock->Acquire();
+
+    (void) interrupt->SetLevel(oldLevel);
+
+}
+void Condition::Signal(Lock* conditionLock) {
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    Thread* thread;
+    thread = (Thread*)queue->Remove();
+    if(thread!=NULL)
+        scheduler->ReadyToRun(thread);
+
+    (void) interrupt->SetLevel(oldLevel);
+}
+
+void Condition::Broadcast(Lock* conditionLock) { 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    while(!queue->IsEmpty())
+        Signal(conditionLock);
+    (void) interrupt->SetLevel(oldLevel);
+
+}
